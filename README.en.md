@@ -53,3 +53,7 @@ python -m unittest discover -s tests
 `;` delimiter, empty file, every exit code, `--json` shape.
 
 Python 3.8+, standard library only.
+
+---
+
+More projects: [github.com/basovdanil](https://github.com/basovdanil) · write-ups: [portfolio](https://basovdanil.github.io/portfolio/)

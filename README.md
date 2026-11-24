@@ -53,3 +53,7 @@ python -m unittest discover -s tests
 cp1251, разделитель `;`, пустой файл, все коды возврата, форма `--json`.
 
 Python 3.8+, только стандартная библиотека.
+
+---
+
+Другие проекты: [github.com/basovdanil](https://github.com/basovdanil) · разборы с числами: [portfolio](https://basovdanil.github.io/portfolio/)
