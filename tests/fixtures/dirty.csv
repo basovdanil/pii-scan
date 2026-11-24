@@ -1,0 +1,4 @@
+id,name,email,phone,passport,note
+1,Иванов Иван,ivan.petrov@example.com,+7 900 123-45-67,4510 123456,ok
+2,Петров Пётр,p.petrov@example.com,8 (495) 123-45-67,,,
+3,Сидоров,no-mail,89001234567,4516123456,СНИЛС 123-456-789 64
