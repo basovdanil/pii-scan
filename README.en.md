@@ -4,6 +4,11 @@
 
 **English** · [Русский](README.md)
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/basovdanil/basovdanil/main/assets/tools.png"
+       alt="Eight tools with tests and exit codes" width="100%">
+</p>
+
 Scans a CSV export for personal data before the file leaves the company and returns a non-zero exit
 code, so it can gate a pipeline.
 

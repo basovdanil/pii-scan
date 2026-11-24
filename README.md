@@ -4,6 +4,11 @@
 
 [English](README.en.md) · **Русский**
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/basovdanil/basovdanil/main/assets/tools.png"
+       alt="Восемь инструментов с тестами и кодами возврата" width="100%">
+</p>
+
 Ищет персональные данные в CSV-выгрузке до того, как файл уйдёт наружу, и возвращает ненулевой
 код — это годится как условие в конвейере.
 
