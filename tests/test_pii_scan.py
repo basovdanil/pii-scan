@@ -53,7 +53,7 @@ class MaskingTest(unittest.TestCase):
         self.assertEqual(pii_scan.mask("ivan.petrov@example.com", "email"), "i***@example.com")
 
     def test_phone_masked(self):
-        self.assertEqual(pii_scan.mask("+7 900 123-45-67", "phone"), "***52")
+        self.assertEqual(pii_scan.mask("+7 900 123-45-67", "phone"), "***67")
 
     def test_report_carries_no_raw_values(self):
         report = pii_scan.scan(FIXTURES / "dirty.csv")
