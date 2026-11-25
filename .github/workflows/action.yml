@@ -1,0 +1,44 @@
+name: action
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  local:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan the dirty fixture (must fail)
+        id: dirty
+        uses: ./
+        continue-on-error: true
+        with:
+          file: tests/fixtures/dirty.csv
+      - name: Scan the clean fixture (must pass)
+        id: clean
+        uses: ./
+        with:
+          file: tests/fixtures/clean.csv
+      - name: The dirty file must fail and the clean one must pass
+        run: |
+          test "${{ steps.dirty.outcome }}" = "failure"
+          test "${{ steps.clean.outcome }}" = "success"
+          echo "${{ steps.dirty.outputs.result }}"
+
+  remote-tag:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run basovdanil/pii-scan@v1
+        id: remote
+        uses: basovdanil/pii-scan@v1
+        continue-on-error: true
+        with:
+          file: tests/fixtures/dirty.csv
+          json: "true"
+      - name: JSON output must carry masked values only
+        run: |
+          echo '${{ steps.remote.outputs.result }}' | tee out.json
+          grep -q '"totals"' out.json
+          ! grep -q 'ivan.petrov@example.com' out.json

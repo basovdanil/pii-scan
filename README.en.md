@@ -42,6 +42,22 @@ python pii_scan.py <file.csv> [--json] [--delimiter ';']
 Exit codes: `0` nothing found, `2` bad arguments, `3` the file cannot be read, `4` personal data
 found.
 
+## Use in CI as a GitHub Action
+
+```yaml
+- uses: basovdanil/pii-scan@v1
+  id: pii
+  with:
+    file: export.csv          # path in your repository
+    delimiter: ","            # ";" for Excel and 1C exports
+    json: "false"             # "true" for the machine-readable report
+
+- run: echo '${{ steps.pii.outputs.result }}'
+```
+
+Exit code `4` fails the step when anything is found, so a workflow that uploads an export stops
+before the file leaves the runner. `actions/setup-python` is included in the action.
+
 ## What it is not
 
 This is a smoke detector, not a compliance tool. It finds data by shape, so it misses anything

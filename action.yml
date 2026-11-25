@@ -1,0 +1,52 @@
+name: "pii-scan"
+description: "Scan a CSV export for e-mail, phone, passport pairs and SNILS before it leaves the company"
+author: "basovdanil"
+branding:
+  icon: "shield"
+  color: "green"
+
+inputs:
+  file:
+    description: "Path to the CSV file to scan"
+    required: true
+  delimiter:
+    description: "Field delimiter (use ';' for exports from Excel and 1C)"
+    required: false
+    default: ","
+  json:
+    description: "Print the machine-readable report"
+    required: false
+    default: "false"
+
+outputs:
+  result:
+    description: "Report text: per-column counts and masked examples"
+    value: ${{ steps.scan.outputs.result }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - id: scan
+      shell: bash
+      env:
+        FILE: ${{ inputs.file }}
+        DELIMITER: ${{ inputs.delimiter }}
+        AS_JSON: ${{ inputs.json }}
+      run: |
+        set -o pipefail
+        args=(--delimiter "$DELIMITER")
+        if [ "$AS_JSON" = "true" ]; then
+          args+=(--json)
+        fi
+        output=$(python "$GITHUB_ACTION_PATH/pii_scan.py" "$FILE" "${args[@]}")
+        status=$?
+        echo "$output"
+        {
+          echo "result<<EOF"
+          echo "$output"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+        exit $status
