@@ -27,6 +27,13 @@ jobs:
           file: tests/fixtures/dirty.csv
           json: "true"
           fail-on-findings: "false"
+      - name: Directory mode without failing the build
+        id: folder
+        uses: ./
+        with:
+          file: tests/fixtures
+          json: "true"
+          fail-on-findings: "false"
       - name: Assertions
         run: |
           test "${{ steps.dirty.outcome }}" = "failure"
@@ -34,6 +41,7 @@ jobs:
           echo '${{ steps.clean.outputs.result }}' | grep -q 'nothing found'
           echo '${{ steps.report.outputs.result }}' | grep -q '"totals"'
           echo '${{ steps.report.outputs.has-findings }}' | grep -q yes
+          echo '${{ steps.folder.outputs.result }}' | grep -q '"file_count": 2'
 
   remote-tag:
     runs-on: ubuntu-24.04

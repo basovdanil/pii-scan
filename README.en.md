@@ -33,14 +33,17 @@ report itself can be shared.
 
 ```
 python pii_scan.py <file.csv> [--json] [--delimiter ';']
+python pii_scan.py --from-dir exports/ [--recursive] [--json]
 ```
 
 - `--json` prints the report object: rows, columns, per-column findings, totals by type;
+- `--from-dir` scans every `*.csv` in a directory and prints one line per file plus the grand total;
+  `--recursive` includes subdirectories, `--json` returns `{files, totals, files_with_findings}`;
 - `--delimiter` for exports from Excel and 1C that use `;`;
 - UTF-8 with or without BOM; a windows-1251 file needs the encoding adjusted in code (one argument).
 
-Exit codes: `0` nothing found, `2` bad arguments, `3` the file cannot be read, `4` personal data
-found.
+Exit codes: `0` nothing found, `2` bad arguments, `3` the file cannot be read (or the directory has
+no CSV), `4` personal data found.
 
 ## Use in CI as a GitHub Action
 

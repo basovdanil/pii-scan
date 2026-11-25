@@ -74,14 +74,90 @@ def scan(path: Path, delimiter: str = ",", encoding: str = "utf-8-sig") -> dict:
             "findings": findings, "totals": totals}
 
 
+def scan_directory(directory: Path, delimiter: str = ",", recursive: bool = False,
+                   encoding: str = "utf-8-sig") -> dict:
+    """Scan every CSV in a directory. Returns one report per file plus grand totals."""
+    pattern = "**/*.csv" if recursive else "*.csv"
+    files = sorted(path for path in directory.glob(pattern) if path.is_file())
+    reports, failed = [], []
+    for path in files:
+        try:
+            reports.append(scan(path, delimiter=delimiter, encoding=encoding))
+        except (UnicodeDecodeError, ValueError, csv.Error) as exc:
+            failed.append({"file": str(path), "error": str(exc)})
+
+    totals: dict[str, int] = {}
+    with_findings = 0
+    for report in reports:
+        if report["findings"]:
+            with_findings += 1
+        for kind, count in report["totals"].items():
+            totals[kind] = totals.get(kind, 0) + count
+
+    return {
+        "directory": str(directory),
+        "recursive": recursive,
+        "files": reports,
+        "errors": failed,
+        "file_count": len(reports),
+        "files_with_findings": with_findings,
+        "totals": totals,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Scan a CSV export for personal data.")
-    parser.add_argument("file", help="CSV file to scan")
+    parser.add_argument("file", nargs="?", help="CSV file to scan")
+    parser.add_argument("--from-dir", dest="from_dir", metavar="DIR",
+                        help="scan every *.csv in a directory")
+    parser.add_argument("--recursive", action="store_true",
+                        help="with --from-dir: include subdirectories")
     parser.add_argument("--json", action="store_true", help="machine-readable output")
     parser.add_argument("--delimiter", default=",", help="field delimiter, default ','")
     args = parser.parse_args(argv)
 
+    if args.from_dir and args.file:
+        print("error: pass either a file or --from-dir, not both", file=sys.stderr)
+        return 2
+    if not args.from_dir and not args.file:
+        print("error: pass a CSV file or --from-dir DIRECTORY", file=sys.stderr)
+        return 2
+
+    if args.from_dir:
+        directory = Path(args.from_dir)
+        if not directory.is_dir():
+            print(f"error: no such directory: {directory}", file=sys.stderr)
+            return 3
+        report = scan_directory(directory, delimiter=args.delimiter, recursive=args.recursive)
+        if not report["file_count"]:
+            print(f"error: no *.csv files in {directory}"
+                  f"{' (including subdirectories)' if args.recursive else ''}", file=sys.stderr)
+            return 3
+
+        if args.json:
+            print(json.dumps(report, ensure_ascii=False, indent=1))
+        else:
+            matches = sum(report["totals"].values())
+            print(f"{report['directory']}: {report['file_count']} CSV files, "
+                  f"{report['files_with_findings']} with findings, {matches} matches")
+            for item in report["files"]:
+                count = sum(column["count"] for column in item["findings"].values())
+                if item["findings"]:
+                    kinds = ", ".join(f"{k}={v}" for k, v in sorted(item["totals"].items()))
+                    print(f"  {item['file']}: {count} ({kinds})")
+                else:
+                    print(f"  {item['file']}: nothing found")
+            for error in report["errors"]:
+                print(f"  {error['file']}: cannot read — {error['error']}")
+
+        if report["errors"]:
+            return 3
+        return 4 if report["totals"] else 0
+
     path = Path(args.file)
+    if path.is_dir():
+        print(f"error: {path} is a directory; use --from-dir {path}", file=sys.stderr)
+        return 3
     if not path.exists():
         print(f"error: no such file: {path}", file=sys.stderr)
         return 3
