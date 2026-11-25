@@ -9,34 +9,43 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Scan the dirty fixture (must fail)
+      - name: Dirty fixture with fail-on-findings (must fail)
         id: dirty
         uses: ./
         continue-on-error: true
         with:
           file: tests/fixtures/dirty.csv
-      - name: Scan the clean fixture (must pass)
+      - name: Clean fixture (must pass and report "nothing found")
         id: clean
         uses: ./
         with:
           file: tests/fixtures/clean.csv
-      - name: The dirty file must fail and the clean one must pass
+      - name: Dirty fixture without failing the build
+        id: report
+        uses: ./
+        with:
+          file: tests/fixtures/dirty.csv
+          json: "true"
+          fail-on-findings: "false"
+      - name: Assertions
         run: |
           test "${{ steps.dirty.outcome }}" = "failure"
           test "${{ steps.clean.outcome }}" = "success"
-          echo "${{ steps.dirty.outputs.result }}"
+          echo '${{ steps.clean.outputs.result }}' | grep -q 'nothing found'
+          echo '${{ steps.report.outputs.result }}' | grep -q '"totals"'
+          echo '${{ steps.report.outputs.has-findings }}' | grep -q yes
 
   remote-tag:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Run basovdanil/pii-scan@v1
+      - name: Run basovdanil/pii-scan@v1 without failing the build
         id: remote
         uses: basovdanil/pii-scan@v1
-        continue-on-error: true
         with:
           file: tests/fixtures/dirty.csv
           json: "true"
+          fail-on-findings: "false"
       - name: JSON output must carry masked values only
         run: |
           echo '${{ steps.remote.outputs.result }}' | tee out.json

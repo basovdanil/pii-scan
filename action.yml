@@ -17,11 +17,18 @@ inputs:
     description: "Print the machine-readable report"
     required: false
     default: "false"
+  fail-on-findings:
+    description: "Fail the step when personal data is found (set to 'false' to only report)"
+    required: false
+    default: "true"
 
 outputs:
   result:
     description: "Report text: per-column counts and masked examples"
     value: ${{ steps.scan.outputs.result }}
+  has-findings:
+    description: "yes when personal data was found, no when the file is clean"
+    value: ${{ steps.scan.outputs.has-findings }}
 
 runs:
   using: "composite"
@@ -35,18 +42,24 @@ runs:
         FILE: ${{ inputs.file }}
         DELIMITER: ${{ inputs.delimiter }}
         AS_JSON: ${{ inputs.json }}
+        FAIL: ${{ inputs.fail-on-findings }}
       run: |
-        set -o pipefail
+        set +e
         args=(--delimiter "$DELIMITER")
         if [ "$AS_JSON" = "true" ]; then
           args+=(--json)
         fi
         output=$(python "$GITHUB_ACTION_PATH/pii_scan.py" "$FILE" "${args[@]}")
         status=$?
+        set -e
         echo "$output"
         {
           echo "result<<EOF"
           echo "$output"
           echo "EOF"
+          echo "has-findings=$([ "$status" -eq 4 ] && echo yes || echo no)"
         } >> "$GITHUB_OUTPUT"
-        exit $status
+        if [ "$FAIL" = "true" ] && [ "$status" -ne 0 ]; then
+          exit $status
+        fi
+        exit 0
